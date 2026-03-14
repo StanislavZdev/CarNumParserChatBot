@@ -23,10 +23,17 @@ public class SearchNumber {
                         && str.charAt(6) >= '0' && str.charAt(6) <= '9'
                         && str.charAt(7) >= '0' && str.charAt(7) <= '9') {
 
+                    StringBuilder stringBuilder = new StringBuilder();
+
                     if ((i + 8) < text.length() && text.charAt(i + 8) > '0' && text.charAt(i + 8) <= '9') {
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!  вернуть заглавные буквы
-                        return text.substring(i, i + 9);
-                    } else return text.substring(i, i + 8);
+                        stringBuilder.append(text, i, i + 9);
+                    } else stringBuilder.append(text, i, i + 8);
+
+                    stringBuilder.setCharAt(0, 'Х');
+                    stringBuilder.setCharAt(4, 'А');
+                    stringBuilder.setCharAt(5, 'М');
+
+                    return stringBuilder.toString();
                 }
             }
         }

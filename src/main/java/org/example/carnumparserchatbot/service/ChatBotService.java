@@ -12,11 +12,13 @@ package org.example.carnumparserchatbot.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.carnumparserchatbot.config.ChatBotClientConfig;
 import org.example.carnumparserchatbot.entity.CarNumParserEntity;
 import org.example.carnumparserchatbot.repository.CarNumParserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -25,11 +27,12 @@ import java.util.Scanner;
 
 @Service
 @RequiredArgsConstructor
-
+@Slf4j
 public class ChatBotService {
 
     private final WebClient telegramWebClient;
     private final CarNumParserRepository carNumParserRepository;
+
     SearchNumber searchNumber = new SearchNumber();
 
     public Mono<Void> handleUpdate(JsonNode update) {
@@ -57,21 +60,32 @@ public class ChatBotService {
         }
 
 
-        // логика поиска номера в сообщении
-        String number = searchNumber.numParser(text);
-// !!!!!!!!! сделать цикл как в примере, чтобы в тексте нашлись все номера. можно с помощью сканера
-        if(!number.isBlank()) {
-            // если есть номер, создаем сущность для бд
-            CarNumParserEntity carNumParserEntity = CarNumParserEntity.builder()
-                    .chatId(chatId)
-                    .number(number)
-                    .nameSender(nameSender)
-                    .build();
-            // асинхронно сохраняем в бд
-            Mono.fromCallable(() -> carNumParserRepository.save(carNumParserEntity))
-                    .subscribeOn(Schedulers.boundedElastic())
-                    .subscribe();
+        // логика поиска номеров в сообщении
+        Scanner scan = new Scanner(text);
 
+        while (scan.hasNext()) {
+
+            String number = searchNumber.numParser(scan.next());
+
+            if (!number.isBlank()) {
+                // если есть номер, создаем сущность для бд
+                CarNumParserEntity carNumParserEntity = CarNumParserEntity.builder()
+                        .chatId(chatId)
+                        .number(number)
+                        .nameSender(nameSender)
+                        .build();
+                // асинхронно сохраняем в бд
+                Mono.fromCallable(() -> carNumParserRepository.save(carNumParserEntity))
+                        .subscribeOn(Schedulers.boundedElastic())
+                        .subscribe(
+                                savedEntity -> {
+                                    log.info("Entity was saved: {}", savedEntity);
+                                },
+                                error -> {
+                                    log.error("Error saved entity: {}", error.getMessage(), error);
+                                }
+                        );
+            }
         }
     }
 }

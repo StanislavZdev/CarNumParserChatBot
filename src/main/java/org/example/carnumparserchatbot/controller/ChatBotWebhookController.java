@@ -3,6 +3,7 @@ package org.example.carnumparserchatbot.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.carnumparserchatbot.service.ChatBotService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 
 public class ChatBotWebhookController {
 
@@ -23,8 +25,14 @@ public class ChatBotWebhookController {
     @PostMapping(value = "/webhook", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> onUpdate(@RequestBody JsonNode update) {
         chatBotService.handleUpdate(update)
-                .doOnError(error -> log.error("Ошибка обработки обновления", error))
-                .subscibe();
+                .subscribe(
+                        savedUpdate -> {
+                            log.info("Update was saved: {}", savedUpdate);
+                        },
+                        error -> {
+                            log.error("Error update Json: {}", error.getMessage(), error);
+                        }
+                        );
 
         return ResponseEntity.ok().build();
     }
