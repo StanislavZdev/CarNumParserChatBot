@@ -26,6 +26,10 @@ public class CarNumParserEntity {
     @Column(nullable = false)
     private String number;
 
+    // хранит имя отправителя номера
+    @Column(nullable = false)
+    private String nameSender;
+
     // время сохранения
     @Column(nullable = false)
     private Instant savedAt = Instant.now();

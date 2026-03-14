@@ -3,7 +3,6 @@ package org.example.carnumparserchatbot.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j;
 import org.example.carnumparserchatbot.service.ChatBotService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -11,11 +10,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.awt.*;
 
 
 @RestController
 @RequiredArgsConstructor
+
 public class ChatBotWebhookController {
 
     private final ChatBotService chatBotService;
