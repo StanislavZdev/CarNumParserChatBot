@@ -1,19 +1,9 @@
 package org.example.carnumparserchatbot.service;
 
 
-
-
-
-/*
-...............
-нужно парсить имя и фамилию пользователя, который прислал номер и сохранять его в бд
-..............
- */
-
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.carnumparserchatbot.config.ChatBotClientConfig;
 import org.example.carnumparserchatbot.entity.CarNumParserEntity;
 import org.example.carnumparserchatbot.repository.CarNumParserRepository;
 import org.springframework.stereotype.Service;
@@ -33,7 +23,8 @@ public class ChatBotService {
     private final WebClient telegramWebClient;
     private final CarNumParserRepository carNumParserRepository;
 
-    SearchNumber searchNumber = new SearchNumber();
+    private final SearchNumber searchNumber;
+    private final ChatBotCommands chatBotCommands;
 
     public Mono<Void> handleUpdate(JsonNode update) {
 
@@ -44,30 +35,31 @@ public class ChatBotService {
         }
         // парсим id чата
         String chatId = message.path("chat").path("id").asText();
-
-        // в asText создаем пустую строку, чтобы не ловить исключение т.к. (api тг в "message" также отправляет изображение и голосовое)
+        // в asText создаем пустую строку, чтобы не ловить исключение т.к. (api тг в "message" также отправляет изображения и войсы)
         String text = message.path("text").asText("");
-
         // парсим имя отправителя
         String nameSender = message.path("from").path("first_name").asText();
 
         // команды из api тг
         if (text.startsWith("/list")) {
-            return sendList(chatId);
+            return chatBotCommands.sendList(chatId);
         }
         if (text.endsWith("/clear")) {
-            return clearNumbers(chatId);
+            return chatBotCommands.clearNumbers(chatId);
         }
-
+        // флаг валидного номера в сообщении
+        boolean found = false;
 
         // логика поиска номеров в сообщении
         Scanner scan = new Scanner(text);
 
         while (scan.hasNext()) {
-
             String number = searchNumber.numParser(scan.next());
-
+/*
+          !!! нужно проверять, есть ли уже этот номер, если есть - выводить сообщения пользователю
+ */
             if (!number.isBlank()) {
+                found = true;
                 // если есть номер, создаем сущность для бд
                 CarNumParserEntity carNumParserEntity = CarNumParserEntity.builder()
                         .chatId(chatId)
@@ -87,5 +79,7 @@ public class ChatBotService {
                         );
             }
         }
+        if (found) return chatBotCommands.sendMessage(chatId, "✅ Номер(а) сохранен(ы).");
+        else return Mono.empty();
     }
 }
