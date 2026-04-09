@@ -25,7 +25,14 @@ public class ChatBotWebhookController {
     @PostMapping(value = "/webhook", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> onUpdate(@RequestBody JsonNode update) {
         chatBotService.handleUpdate(update)
-                .subscribe();
+                .subscribe(
+                        savedUpdate -> {
+                            log.info("Update was saved: {}", savedUpdate);
+                        },
+                        error -> {
+                            log.error("Error update Json: {}", error.getMessage(), error);
+                        }
+                        );
 
         return ResponseEntity.ok().build();
     }
