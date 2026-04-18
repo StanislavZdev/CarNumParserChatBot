@@ -1,91 +1,55 @@
 package org.example.carnumparserchatbot.service;
 
-
-
-
-
-/*
-...............
-нужно парсить имя и фамилию пользователя, который прислал номер и сохранять его в бд
-..............
- */
-
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.carnumparserchatbot.config.ChatBotClientConfig;
+import org.example.carnumparserchatbot.dto.TelegramDTOUpdate;
 import org.example.carnumparserchatbot.entity.CarNumParserEntity;
 import org.example.carnumparserchatbot.repository.CarNumParserRepository;
+import org.example.carnumparserchatbot.service.client.TelegramClient;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.transaction.annotation.Transactional;
 
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
-
-import java.util.Scanner;
-
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+
 public class ChatBotService {
 
-    private final WebClient telegramWebClient;
+    private final TelegramClient telegramClient;
     private final CarNumParserRepository carNumParserRepository;
+    private final SearchNumber searchNumber;
+    private final ChatBotCommands chatBotCommands;
 
-    SearchNumber searchNumber = new SearchNumber();
+    @Transactional
+    public void handleMessage(TelegramDTOUpdate dto) {
+        if(dto.message() == null) return;
 
-    public Mono<Void> handleUpdate(JsonNode update) {
+        String chatId = dto.message().chat().id();
+        String text = dto.message().text();
+        String nameSender = dto.message().from().firstName();
 
-        JsonNode message = update.path("message");
-        // игнорируем все виды обновлений, кроме message
-        if (message.isMissingNode()) {
-            return Mono.empty();
-        }
-        // парсим id чата
-        String chatId = message.path("chat").path("id").asText();
+        if(text == null) return;
 
-        // в asText создаем пустую строку, чтобы не ловить исключение т.к. (api тг в "message" также отправляет изображение и голосовое)
-        String text = message.path("text").asText("");
-
-        // парсим имя отправителя
-        String nameSender = message.path("from").path("first_name").asText();
-
-        // команды из api тг
-        if (text.startsWith("/list")) {
-            return sendList(chatId);
-        }
-        if (text.endsWith("/clear")) {
-            return clearNumbers(chatId);
+        String inputMessage = text.trim().toLowerCase();
+        if(inputMessage.equals("/list") || inputMessage.equals("/clear")) {
+            chatBotCommands.commandHandler(inputMessage, chatId);
+            return;
         }
 
+        List<String> numbers = searchNumber.numParser(text);
+        if(numbers.isEmpty()) return;
 
-        // логика поиска номеров в сообщении
-        Scanner scan = new Scanner(text);
-
-        while (scan.hasNext()) {
-
-            String number = searchNumber.numParser(scan.next());
-
-            if (!number.isBlank()) {
-                // если есть номер, создаем сущность для бд
-                CarNumParserEntity carNumParserEntity = CarNumParserEntity.builder()
+        List<CarNumParserEntity> toSave = numbers.stream()
+                .map(number -> CarNumParserEntity.builder()
                         .chatId(chatId)
                         .number(number)
                         .nameSender(nameSender)
-                        .build();
-                // асинхронно сохраняем в бд
-                Mono.fromCallable(() -> carNumParserRepository.save(carNumParserEntity))
-                        .subscribeOn(Schedulers.boundedElastic())
-                        .subscribe(
-                                savedEntity -> {
-                                    log.info("Entity was saved: {}", savedEntity);
-                                },
-                                error -> {
-                                    log.error("Error saved entity: {}", error.getMessage(), error);
-                                }
-                        );
-            }
-        }
+                        .build())
+                        .toList();
+
+        carNumParserRepository.saveAll(toSave);
+        telegramClient.sendText(chatId, "✅ Номер(а) сохранен(ы).");
     }
 }

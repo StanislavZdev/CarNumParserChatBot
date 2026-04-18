@@ -2,9 +2,13 @@ package org.example.carnumparserchatbot.config;
 
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.client.RestTemplate;
+
+import java.time.Duration;
+
 
 @Configuration
 public class ChatBotClientConfig {
@@ -14,9 +18,12 @@ public class ChatBotClientConfig {
     private String botToken;
 
     @Bean
-    public WebClient telegramWebClient() {
-          return WebClient.builder()
-                  .baseUrl("https://api.telegram.org/bot" + botToken)
-                  .build();
+    public RestTemplate telegramRestTemplate() {
+        return new RestTemplateBuilder()
+                .rootUri("https://api.telegram.org/bot" + botToken)
+                // ставим таймауты, чтобы избежать черезмерного ожидания, если коннект не состоялся
+                .setConnectTimeout(Duration.ofSeconds(5))
+                .setReadTimeout(Duration.ofSeconds(5))
+                .build();
     }
 }
