@@ -29,10 +29,7 @@ public class SearchNumber {
     }
 
     private String normalize(String n) {
-        return "Х" +
-                n.substring(1, 4).toUpperCase() +
-                "А" +
-                "М" +
-                n.substring(5);
+        return "Х" + n.substring(1, 4)
+                .toUpperCase() + "А" + "М" + n.substring(5);
     }
 }

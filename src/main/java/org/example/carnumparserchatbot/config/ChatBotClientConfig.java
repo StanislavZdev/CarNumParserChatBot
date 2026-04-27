@@ -13,8 +13,8 @@ import java.time.Duration;
 @Configuration
 public class ChatBotClientConfig {
 
-    // из application.yml подгружается токен бота по ключу telegram.bot.token
-    @Value("${telegram.bot.token}")
+    // из application-dev.yml подгружается токен бота по ключу telegram.bot.token
+    @Value("${TELEGRAM_BOT_TOKEN}")
     private String botToken;
 
     @Bean
