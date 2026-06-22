@@ -50,7 +50,7 @@ public class ChatBotService {
 
         List<CarNumParserEntity> toSave = foundNumbers.stream()
                 .peek(number -> {
-                    if (allNumInBase.contains(number)) telegramClient.sendText(chatId, number + " уже сохранен в базу 📭");
+                    if (allNumInBase.contains(number)) telegramClient.sendText(chatId, number + " уже был сохранен 📭");
                 })
                 .filter(number -> !allNumInBase.contains(number))
                 .map(number -> CarNumParserEntity.builder()

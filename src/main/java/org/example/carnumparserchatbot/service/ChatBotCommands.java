@@ -34,10 +34,22 @@ public class ChatBotCommands {
                    telegramClient.sendText(chatId, "📭 В этом чате пока нет сохранённых номеров.");
                  return;
                }
-               String allListCarNum = list.stream()
-                       .map(n -> n.getId() + " " + n.getNumber() + " " + n.getNameSender())
-                       .collect(Collectors.joining("\n", "📭 Сохранённые номера:\n", ""));
 
+               int autoIncrement = 1;
+               var listCarNumBuilder = new StringBuilder();
+               listCarNumBuilder.append("📭 Сохранённые номера:\n");
+
+               for (CarNumParserEntity carNumParserEntity : list) {
+                   listCarNumBuilder.append("\n")
+                           .append(autoIncrement)
+                           .append("  ")
+                           .append(carNumParserEntity.getNumber()).append("  ")
+                           .append(carNumParserEntity.getNameSender());
+
+                   autoIncrement++;
+               }
+
+               String allListCarNum =  listCarNumBuilder.toString();
                telegramClient.sendText(chatId, allListCarNum);
            }
            private void clear (String chatId) {

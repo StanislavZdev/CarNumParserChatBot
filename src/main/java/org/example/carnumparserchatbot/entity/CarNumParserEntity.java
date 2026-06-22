@@ -33,5 +33,12 @@ public class CarNumParserEntity {
 
     // время сохранения
     @Column(nullable = false)
-    private Instant savedAt = Instant.now();
+    private Instant savedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (savedAt == null) {
+            savedAt = Instant.now();
+        }
+    }
 }
