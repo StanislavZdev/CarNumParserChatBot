@@ -21,14 +21,16 @@ public class SearchNumber {
         Matcher m = PATTERN.matcher(text);
         List<String> result = new ArrayList<>();
 
-        while (m.find()) {
+       int start = 0;
+        while (m.find(start)) {
             result.add(normalize(m.group(1)));
+            start = m.end();
         }
 
         return result;
     }
 
     private String normalize(String n) {
-        return "Х" + n.substring(1, 4).toUpperCase() + "АМ" + n.substring(5);
+        return "Х" + n.substring(1, 4).toUpperCase() + "АМ" + n.substring(6);
     }
 }
