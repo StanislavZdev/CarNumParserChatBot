@@ -22,8 +22,8 @@ public class ChatBotClientConfig {
         return new RestTemplateBuilder()
                 .rootUri("https://api.telegram.org/bot" + botToken)
                 // ставим таймауты, чтобы избежать черезмерного ожидания, если коннект не состоялся
-                .setConnectTimeout(Duration.ofSeconds(5))
-                .setReadTimeout(Duration.ofSeconds(5))
+                .setConnectTimeout(Duration.ofSeconds(10))
+                .setReadTimeout(Duration.ofSeconds(10))
                 .build();
     }
 }

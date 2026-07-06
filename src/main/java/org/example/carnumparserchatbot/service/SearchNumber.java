@@ -21,10 +21,10 @@ public class SearchNumber {
         Matcher m = PATTERN.matcher(text);
         List<String> result = new ArrayList<>();
 
-       int start = 0;
+        int start = 0;
         while (m.find(start)) {
             result.add(normalize(m.group(1)));
-            start = m.end();
+            start = m.end() - 1;
         }
 
         return result;
